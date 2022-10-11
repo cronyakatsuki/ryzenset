@@ -13,7 +13,7 @@ CONFIG_FILE = f"/home/{os.getlogin()}/.local/share/ryzen-set/profiles.ini"
 lib_path = os.path.dirname(os.path.abspath(__file__))
 os.chdir(lib_path)
 
-lib = cdll.LoadLibrary('/usr/lib/libryzenadj.so')
+lib = cdll.LoadLibrary('/usr/lib64/libryzenadj.so')
 
 # define ctype mappings for types which can not be mapped automatically
 # ryzenadj tables
