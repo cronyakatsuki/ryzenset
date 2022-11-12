@@ -28,6 +28,12 @@ lib.get_slow_limit.argtypes = [c_void_p]
 # Fast limit and value
 lib.get_fast_limit.restype = c_float
 lib.get_fast_limit.argtypes = [c_void_p]
+# Slow time and value
+lib.get_slow_time.restype = c_float
+lib.get_slow_time.argtypes = [c_void_p]
+# stapm time and value
+lib.get_stapm_time.restype = c_float
+lib.get_stapm_time.argtypes = [c_void_p]
 # Vrm Max Current and value
 lib.get_vrmmax_current.restype = c_float
 lib.get_vrmmax_current.argtypes = [c_void_p]
@@ -95,11 +101,11 @@ def list_by_category(list, config):
 
 
 def set_from_config(config, profile):
-    adjust("stapm_limit", config.getint(profile, 'stamp-limit'))
+    adjust("stapm_limit", config.getint(profile, 'stapm-limit'))
     adjust("fast_limit", config.getint(profile, 'fast-limit'))
     adjust("slow_limit", config.getint(profile, 'slow-limit'))
     adjust("slow_time", config.getint(profile, 'slow-time'))
-    adjust("stapm_time", config.getint(profile, 'stamp-time'))
+    adjust("stapm_time", config.getint(profile, 'stapm-time'))
     adjust("tctl_temp", config.getint(profile, 'tctl-temp'))
     adjust("vrmmax_current", config.getint(profile, 'vrmmax-current'))
 
@@ -108,6 +114,30 @@ def set_from_config(config, profile):
     else:
         enable("power_saving")
 
+
+def get_current_profile(config):
+    profiles = config.sections()
+    lib.refresh_table(ry)
+    current = {
+               'stapm-limit' : f'{round(lib.get_stapm_limit(ry) * 1000)}',
+               'fast-limit' : f'{round(lib.get_fast_limit(ry) * 1000)}',
+               'slow-limit' : f'{round(lib.get_slow_limit(ry) * 1000)}',
+               'slow-time' : f'{round(lib.get_slow_time(ry))}',
+               'stapm-time' : f'{round(lib.get_stapm_time(ry))}',
+               'tctl-temp' : f'{round(lib.get_tctl_temp(ry))}',
+               'vrmmax-current' : f'{round(lib.get_vrmmax_current(ry) * 1000)}',
+               }
+
+    for profile in profiles:
+        options = dict(config.items(profile))
+        options.pop('category')
+        options.pop('max-performance')
+        if current == options:
+            print(profile)
+            sys.exit(0)
+
+    print("system-default")
+    sys.exit(0)
 
 def main():
     parser = argparse.ArgumentParser()
@@ -124,6 +154,8 @@ def main():
     set = subparser.add_parser('set', help="Set specified profile")
     set.add_argument('profile', type=str, metavar='PROFILE', action='store', nargs='?',
                      help="Profile name from the config")
+
+    subparser.add_parser('get', help="Get current profile")
 
     config = configparser.ConfigParser()
 
@@ -162,6 +194,8 @@ def main():
             print('Profile must be provided')
             sys.exit(1)
 
+    if args.command == 'get':
+        get_current_profile(config)
 
 if __name__ == "__main__":
     main()
